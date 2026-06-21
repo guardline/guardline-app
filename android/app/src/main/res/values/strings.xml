@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">GuardLine</string>
+    <string name="accessibility_service_description">GuardLine uses this to detect when you\'re on a call and analyze it for scam content.</string>
 </resources>
