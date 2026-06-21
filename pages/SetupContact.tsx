@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,32 +6,32 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
-} from 'react-native'
-import { pickAndSaveNotifyContact } from '../lib/pickNotifyContact'
-import type { NotifyContact } from '../lib/store'
+} from 'react-native';
+import { pickAndSaveNotifyContact } from '../lib/pickNotifyContact';
+import type { NotifyContact } from '../lib/store';
 
 interface Props {
-  onComplete: (contact: NotifyContact) => void
+  onComplete: (contact: NotifyContact) => void;
 }
 
 export default function SetupContact({ onComplete }: Props) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePick = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      const contact = await pickAndSaveNotifyContact()
+      const contact = await pickAndSaveNotifyContact();
       if (contact) {
-        onComplete(contact)
+        onComplete(contact);
       }
     } catch {
-      setError('Could not open contacts. Please try again.')
+      setError('Could not open contacts. Please try again.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -42,7 +42,8 @@ export default function SetupContact({ onComplete }: Props) {
 
         <Text style={styles.title}>Who should we alert?</Text>
         <Text style={styles.desc}>
-          Choose a trusted contact from your phone. During a scam demo, GuardLine will show their name when a fake alert is sent — no real SMS is sent.
+          Choose a trusted contact from your phone. GuardLine will show their
+          name when an alert is sent.
         </Text>
 
         <TouchableOpacity
@@ -60,7 +61,7 @@ export default function SetupContact({ onComplete }: Props) {
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </View>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -125,4 +126,4 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: 'center',
   },
-})
+});

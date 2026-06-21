@@ -29,7 +29,7 @@ Schema:
 }`;
 
 async function callGemini(parts: object[]): Promise<ScamAnalysis> {
-  const apiKey = 'AQ.Ab8RN6KpZGznVv1hqNmfevOEckWSFZBunJP6tsLT0Ep0kXOJCQ';
+  const apiKey = 'AQ';
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,

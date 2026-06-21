@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -9,10 +9,10 @@ import {
   Vibration,
   Linking,
   Alert,
-} from 'react-native'
-import RiskRing from '../components/RiskRing'
-import { addAlert, getNotifyContact } from '../lib/store'
-import { speak, stopSpeaking } from '../lib/elevenlabs'
+} from 'react-native';
+import RiskRing from '../components/RiskRing';
+import { addAlert, getNotifyContact } from '../lib/store';
+import { speak, stopSpeaking } from '../lib/elevenlabs';
 
 const SCRIPT = [
   {
@@ -45,180 +45,197 @@ const SCRIPT = [
     targetRisk: 99,
     flag: null,
   },
-] as const
+] as const;
 
-type Phase = 'idle' | 'calling' | 'ended'
+type Phase = 'idle' | 'calling' | 'ended';
 
 interface Props {
-  onBackToHome: () => void
+  onBackToHome: () => void;
 }
 
 export default function CallDemo({ onBackToHome }: Props) {
-  const [phase, setPhase] = useState<Phase>('idle')
-  const [displayScore, setDisplayScore] = useState(0)
-  const [completedLines, setCompletedLines] = useState<string[]>([])
-  const [typingText, setTypingText] = useState('')
-  const [redFlags, setRedFlags] = useState<string[]>([])
-  const [scamDetected, setScamDetected] = useState(false)
-  const [smsVisible, setSmsVisible] = useState(false)
-  const [flashRed, setFlashRed] = useState(false)
-  const [elapsed, setElapsed] = useState(0)
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [displayScore, setDisplayScore] = useState(0);
+  const [completedLines, setCompletedLines] = useState<string[]>([]);
+  const [typingText, setTypingText] = useState('');
+  const [redFlags, setRedFlags] = useState<string[]>([]);
+  const [scamDetected, setScamDetected] = useState(false);
+  const [smsVisible, setSmsVisible] = useState(false);
+  const [flashRed, setFlashRed] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
 
-  const scoreRef = useRef(0)
-  const targetScoreRef = useRef(0)
-  const rafRef = useRef<number>(0)
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
-  const typeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const transcriptScrollRef = useRef<ScrollView>(null)
-  const scamTriggeredRef = useRef(false)
-  const smsTriggeredRef = useRef(false)
+  const scoreRef = useRef(0);
+  const targetScoreRef = useRef(0);
+  const rafRef = useRef<number>(0);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const typeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const transcriptScrollRef = useRef<ScrollView>(null);
+  const scamTriggeredRef = useRef(false);
+  const smsTriggeredRef = useRef(false);
 
   // Smooth score counter via rAF (or setInterval for RN compatibility if rAF runs differently on some platforms)
   useEffect(() => {
     const tick = () => {
       if (scoreRef.current < targetScoreRef.current) {
-        const diff = targetScoreRef.current - scoreRef.current
-        scoreRef.current += Math.max(1, Math.ceil(diff * 0.04))
-        if (scoreRef.current > targetScoreRef.current) scoreRef.current = targetScoreRef.current
-        setDisplayScore(scoreRef.current)
+        const diff = targetScoreRef.current - scoreRef.current;
+        scoreRef.current += Math.max(1, Math.ceil(diff * 0.04));
+        if (scoreRef.current > targetScoreRef.current)
+          scoreRef.current = targetScoreRef.current;
+        setDisplayScore(scoreRef.current);
       }
-      rafRef.current = requestAnimationFrame(tick)
-    }
-    rafRef.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [])
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
 
   // Elapsed clock
   useEffect(() => {
-    if (phase !== 'calling') return
-    const id = setInterval(() => setElapsed((e) => e + 1), 1000)
-    return () => clearInterval(id)
-  }, [phase])
+    if (phase !== 'calling') return;
+    const id = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(id);
+  }, [phase]);
 
   const typeOut = useCallback((text: string, onDone: () => void) => {
-    if (typeTimerRef.current) clearInterval(typeTimerRef.current)
-    let i = 0
-    setTypingText('')
+    if (typeTimerRef.current) clearInterval(typeTimerRef.current);
+    let i = 0;
+    setTypingText('');
     typeTimerRef.current = setInterval(() => {
-      i++
-      setTypingText(text.slice(0, i))
+      i++;
+      setTypingText(text.slice(0, i));
       if (i >= text.length) {
-        if (typeTimerRef.current) clearInterval(typeTimerRef.current)
-        onDone()
+        if (typeTimerRef.current) clearInterval(typeTimerRef.current);
+        onDone();
       }
-    }, 26)
-  }, [])
+    }, 26);
+  }, []);
 
   const triggerScamDetected = useCallback(() => {
-    if (scamTriggeredRef.current) return
-    scamTriggeredRef.current = true
-    setScamDetected(true)
-    setFlashRed(true)
-    setTimeout(() => setFlashRed(false), 700)
+    if (scamTriggeredRef.current) return;
+    scamTriggeredRef.current = true;
+    setScamDetected(true);
+    setFlashRed(true);
+    setTimeout(() => setFlashRed(false), 700);
 
     try {
-      Vibration.vibrate([150, 80, 150, 80, 300])
+      Vibration.vibrate([150, 80, 150, 80, 300]);
     } catch {}
 
-    const contactName = getNotifyContact()?.name ?? 'your contact'
-    speak(`Warning! This call sounds like a scam. Please hang up immediately and call ${contactName}.`).catch(() => {})
+    const contactName = getNotifyContact()?.name ?? 'your contact';
+    speak(
+      `Warning! This call sounds like a scam. Please hang up immediately and call ${contactName}.`,
+    ).catch(() => {});
 
     Alert.alert(
       '⚠️ SCAM DETECTED',
       `Warning! This call sounds like a scam. Please hang up immediately and call ${contactName}.`,
-      [{ text: 'Dismiss' }]
-    )
-  }, [])
+      [{ text: 'Dismiss' }],
+    );
+  }, []);
 
   const triggerSmsSent = useCallback(() => {
-    if (smsTriggeredRef.current) return
-    smsTriggeredRef.current = true
-    const contactName = getNotifyContact()?.name ?? 'your contact'
+    if (smsTriggeredRef.current) return;
+    smsTriggeredRef.current = true;
+    const contactName = getNotifyContact()?.name ?? 'your contact';
     const t = setTimeout(() => {
-      setSmsVisible(true)
+      setSmsVisible(true);
       addAlert({
         source: 'call',
         riskScore: 94,
-        flags: ['Impersonation of IRS', 'Threat of arrest', 'Gift card payment', 'Urgency / Isolation'],
-        snippet: '"Hello, this is Officer Daniel Morgan with the IRS Criminal Investigation Division…"',
+        flags: [
+          'Impersonation of IRS',
+          'Threat of arrest',
+          'Gift card payment',
+          'Urgency / Isolation',
+        ],
+        snippet:
+          '"Hello, this is Officer Daniel Morgan with the IRS Criminal Investigation Division…"',
         smsSent: true,
-      })
-      speak(`Alert sent to ${contactName}. They have been notified.`).catch(() => {})
-    }, 2200)
-    timersRef.current.push(t)
-  }, [])
+      });
+      speak(`Alert sent to ${contactName}. They have been notified.`).catch(
+        () => {},
+      );
+    }, 2200);
+    timersRef.current.push(t);
+  }, []);
 
   const startCall = useCallback(() => {
-    timersRef.current.forEach(clearTimeout)
-    timersRef.current = []
-    if (typeTimerRef.current) clearInterval(typeTimerRef.current)
-    stopSpeaking()
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    if (typeTimerRef.current) clearInterval(typeTimerRef.current);
+    stopSpeaking();
 
-    scoreRef.current = 0
-    targetScoreRef.current = 0
-    scamTriggeredRef.current = false
-    smsTriggeredRef.current = false
-    setDisplayScore(0)
-    setCompletedLines([])
-    setTypingText('')
-    setRedFlags([])
-    setScamDetected(false)
-    setSmsVisible(false)
-    setFlashRed(false)
-    setElapsed(0)
-    setPhase('calling')
+    scoreRef.current = 0;
+    targetScoreRef.current = 0;
+    scamTriggeredRef.current = false;
+    smsTriggeredRef.current = false;
+    setDisplayScore(0);
+    setCompletedLines([]);
+    setTypingText('');
+    setRedFlags([]);
+    setScamDetected(false);
+    setSmsVisible(false);
+    setFlashRed(false);
+    setElapsed(0);
+    setPhase('calling');
 
-    SCRIPT.forEach((item) => {
+    SCRIPT.forEach(item => {
       const t = setTimeout(() => {
-        targetScoreRef.current = item.targetRisk
+        targetScoreRef.current = item.targetRisk;
 
         if (item.flag) {
-          setRedFlags((prev) => (prev.includes(item.flag!) ? prev : [...prev, item.flag!]))
+          setRedFlags(prev =>
+            prev.includes(item.flag!) ? prev : [...prev, item.flag!],
+          );
         }
 
-        if (item.targetRisk >= 70) triggerScamDetected()
-        if (item.targetRisk >= 90) triggerSmsSent()
+        if (item.targetRisk >= 70) triggerScamDetected();
+        if (item.targetRisk >= 90) triggerSmsSent();
 
         typeOut(item.text, () => {
-          setCompletedLines((prev) => [...prev, item.text])
-          setTypingText('')
-        })
-      }, item.delay)
-      timersRef.current.push(t)
-    })
-  }, [typeOut, triggerScamDetected, triggerSmsSent])
+          setCompletedLines(prev => [...prev, item.text]);
+          setTypingText('');
+        });
+      }, item.delay);
+      timersRef.current.push(t);
+    });
+  }, [typeOut, triggerScamDetected, triggerSmsSent]);
 
   const endCall = useCallback(() => {
-    timersRef.current.forEach(clearTimeout)
-    if (typeTimerRef.current) clearInterval(typeTimerRef.current)
-    stopSpeaking()
-    setPhase('ended')
-  }, [])
+    timersRef.current.forEach(clearTimeout);
+    if (typeTimerRef.current) clearInterval(typeTimerRef.current);
+    stopSpeaking();
+    setPhase('ended');
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      timersRef.current.forEach(clearTimeout)
-      if (typeTimerRef.current) clearInterval(typeTimerRef.current)
-      cancelAnimationFrame(rafRef.current)
-      stopSpeaking()
-    }
-  }, [])
+      timersRef.current.forEach(clearTimeout);
+      if (typeTimerRef.current) clearInterval(typeTimerRef.current);
+      cancelAnimationFrame(rafRef.current);
+      stopSpeaking();
+    };
+  }, []);
 
   const fmtTime = (s: number) =>
-    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(
+      2,
+      '0',
+    )}`;
 
-  const notifyName = getNotifyContact()?.name ?? 'your contact'
+  const notifyName = getNotifyContact()?.name ?? 'your contact';
 
   return (
     <SafeAreaView style={[styles.safe, flashRed ? styles.flashBg : null]}>
       {/* ── IDLE SCREEN ─────────────────────────────────────── */}
       {phase === 'idle' && (
         <View style={styles.idleContainer}>
-          <Text style={styles.idleSubtitle}>Live Call Demo</Text>
-          <Text style={styles.idleTitle}>Watch AI catch a scam</Text>
+          <Text style={styles.idleSubtitle}>Call Simulation</Text>
+          <Text style={styles.idleTitle}>Watch scam detection in action</Text>
           <Text style={styles.idleDesc}>
-            A scripted IRS scam call plays out. Watch the risk score climb and scam detection trigger in real time.
+            A simulated scam call plays out. Watch the risk score climb and scam
+            detection trigger in real time.
           </Text>
 
           {/* Preview Card */}
@@ -243,7 +260,7 @@ export default function CallDemo({ onBackToHome }: Props) {
           </View>
 
           <TouchableOpacity onPress={startCall} style={styles.startBtn}>
-            <Text style={styles.startBtnText}>🔴 Start Demo Call</Text>
+            <Text style={styles.startBtnText}>🔴 Start Simulation</Text>
           </TouchableOpacity>
           <Text style={styles.durationNote}>Duration: ~25 seconds.</Text>
         </View>
@@ -258,7 +275,9 @@ export default function CallDemo({ onBackToHome }: Props) {
               <Text style={styles.alertBannerEmoji}>⚠️</Text>
               <View style={styles.alertBannerTextWrapper}>
                 <Text style={styles.alertBannerTitle}>SCAM DETECTED</Text>
-                <Text style={styles.alertBannerDesc}>Hang up immediately — alerting {notifyName}</Text>
+                <Text style={styles.alertBannerDesc}>
+                  Hang up immediately — alerting {notifyName}
+                </Text>
               </View>
               <View style={styles.alertBannerScoreBadge}>
                 <Text style={styles.alertBannerScoreText}>{displayScore}%</Text>
@@ -273,11 +292,17 @@ export default function CallDemo({ onBackToHome }: Props) {
                 <Text style={styles.callerHeaderAvatarEmoji}>📵</Text>
               </View>
               <View style={styles.callerHeaderTexts}>
-                <Text style={styles.callerHeaderName}>Unknown — (202) 555-0143</Text>
-                <Text style={styles.callerHeaderStatus}>Connected · {fmtTime(elapsed)}</Text>
+                <Text style={styles.callerHeaderName}>
+                  Unknown — (202) 555-0143
+                </Text>
+                <Text style={styles.callerHeaderStatus}>
+                  Connected · {fmtTime(elapsed)}
+                </Text>
               </View>
               <View style={styles.callerHeaderLabelBadge}>
-                <Text style={styles.callerHeaderLabelText}>⚠️ IRS Tax Division</Text>
+                <Text style={styles.callerHeaderLabelText}>
+                  ⚠️ IRS Tax Division
+                </Text>
               </View>
             </View>
           </View>
@@ -288,10 +313,12 @@ export default function CallDemo({ onBackToHome }: Props) {
             <View style={styles.flagsListWrapper}>
               <Text style={styles.flagsListHeader}>Red Flags Detected</Text>
               <View style={styles.flagsCol}>
-                {redFlags.map((flag) => (
+                {redFlags.map(flag => (
                   <View key={flag} style={styles.flagBadge}>
                     <View style={styles.flagBadgeDot} />
-                    <Text style={styles.flagBadgeText} numberOfLines={1}>{flag}</Text>
+                    <Text style={styles.flagBadgeText} numberOfLines={1}>
+                      {flag}
+                    </Text>
                   </View>
                 ))}
                 {redFlags.length === 0 && (
@@ -308,7 +335,9 @@ export default function CallDemo({ onBackToHome }: Props) {
               ref={transcriptScrollRef}
               style={styles.transcriptScroll}
               contentContainerStyle={styles.transcriptContent}
-              onContentSizeChange={() => transcriptScrollRef.current?.scrollToEnd({ animated: true })}
+              onContentSizeChange={() =>
+                transcriptScrollRef.current?.scrollToEnd({ animated: true })
+              }
             >
               {completedLines.map((line, idx) => (
                 <View key={idx} style={styles.transcriptBubble}>
@@ -342,9 +371,12 @@ export default function CallDemo({ onBackToHome }: Props) {
                 <Text style={styles.smsCheck}>✓</Text>
               </View>
               <Text style={styles.smsBody}>
-                "Mom may be on a scam call right now. AI confidence: 94%. Transcript attached. Please call {notifyName} immediately."
+                "Mom may be on a scam call right now. AI confidence: 94%.
+                Transcript attached. Please call {notifyName} immediately."
               </Text>
-              <Text style={styles.smsDeliveredNote}>SMS delivered · just now</Text>
+              <Text style={styles.smsDeliveredNote}>
+                SMS delivered · just now
+              </Text>
 
               <TouchableOpacity onPress={endCall} style={styles.smsHangupBtn}>
                 <Text style={styles.smsHangupText}>Hang Up — I'm Safe</Text>
@@ -369,15 +401,18 @@ export default function CallDemo({ onBackToHome }: Props) {
             </View>
             <Text style={styles.endedTitle}>You stayed safe.</Text>
             <Text style={styles.endedDesc}>
-              GuardLine detected the scam in {fmtTime(elapsed)} and alerted {notifyName}.
+              GuardLine detected the scam in {fmtTime(elapsed)} and alerted{' '}
+              {notifyName}.
             </Text>
           </View>
 
           {/* Report section */}
           <View style={styles.reportBox}>
             <Text style={styles.reportHeader}>Report (202) 555-0143</Text>
-            <Text style={styles.reportDesc}>Help protect others by reporting this fraud number.</Text>
-            
+            <Text style={styles.reportDesc}>
+              Help protect others by reporting this fraud number.
+            </Text>
+
             <View style={styles.linksCol}>
               <TouchableOpacity
                 onPress={() => Linking.openURL('https://reportfraud.ftc.gov')}
@@ -392,7 +427,11 @@ export default function CallDemo({ onBackToHome }: Props) {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => Linking.openURL('https://safebrowsing.google.com/safebrowsing/report_phish/')}
+                onPress={() =>
+                  Linking.openURL(
+                    'https://safebrowsing.google.com/safebrowsing/report_phish/',
+                  )
+                }
                 style={styles.linkCard}
               >
                 <Text style={styles.linkIcon}>🛡️</Text>
@@ -417,7 +456,7 @@ export default function CallDemo({ onBackToHome }: Props) {
         </ScrollView>
       )}
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -928,4 +967,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
   },
-})
+});

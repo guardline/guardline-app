@@ -21,6 +21,14 @@ export function createElevenLabsSTTStream(
   let sessionStarted = false;
   let chunkCount = 0;
 
+  function extractText(data: any): string {
+    if (typeof data.text === 'string' && data.text) return data.text;
+    if (typeof data.transcript === 'string') return data.transcript;
+    if (data.transcript && typeof data.transcript.text === 'string')
+      return data.transcript.text;
+    return '';
+  }
+
   function connect() {
     const params = new URLSearchParams({
       model_id: 'scribe_v2_realtime',
@@ -39,23 +47,26 @@ export function createElevenLabsSTTStream(
     ws.onmessage = (event: any) => {
       try {
         const data = JSON.parse(event.data as string);
+        const text = extractText(data);
         console.log(
-          '[ElevenLabs-STT] message:',
+          '[ElevenLabs-STT]',
           data.message_type,
-          JSON.stringify(data),
+          text ? `text="${text.slice(0, 80)}"` : '(no text)',
+          'keys:',
+          Object.keys(data),
         );
         switch (data.message_type) {
           case 'session_started':
             sessionStarted = true;
             break;
           case 'partial_transcript':
-            if (data.transcript) {
-              onTranscript({ text: data.transcript, isFinal: false });
+            if (text) {
+              onTranscript({ text, isFinal: false });
             }
             break;
           case 'committed_transcript':
-            if (data.transcript) {
-              onTranscript({ text: data.transcript, isFinal: true });
+            if (text) {
+              onTranscript({ text, isFinal: true });
             }
             break;
           case 'transcriber_error':

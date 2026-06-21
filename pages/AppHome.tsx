@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,31 +6,34 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-} from 'react-native'
-import { getAlerts, type AlertEvent } from '../lib/store'
+} from 'react-native';
+import { getAlerts, type AlertEvent } from '../lib/store';
 
 interface Props {
-  onNavigateToCall: () => void
-  onNavigateToAlerts?: () => void
+  onNavigateToCall: () => void;
+  onNavigateToAlerts?: () => void;
 }
 
-export default function AppHome({ onNavigateToCall, onNavigateToAlerts }: Props) {
-  const [alerts, setAlerts] = useState<AlertEvent[]>([])
+export default function AppHome({
+  onNavigateToCall,
+  onNavigateToAlerts,
+}: Props) {
+  const [alerts, setAlerts] = useState<AlertEvent[]>([]);
 
   useEffect(() => {
-    setAlerts(getAlerts().slice(0, 3)) // Show top 3 recent alerts
-  }, [])
+    setAlerts(getAlerts().slice(0, 3)); // Show top 3 recent alerts
+  }, []);
 
   const formatTime = (iso: string) => {
-    const ms = Date.now() - new Date(iso).getTime()
-    const d = Math.floor(ms / 86400000)
-    const h = Math.floor(ms / 3600000)
-    const m = Math.floor(ms / 60000)
-    if (d > 0) return `${d}d ago`
-    if (h > 0) return `${h}h ago`
-    if (m > 0) return `${m}m ago`
-    return 'just now'
-  }
+    const ms = Date.now() - new Date(iso).getTime();
+    const d = Math.floor(ms / 86400000);
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor(ms / 60000);
+    if (d > 0) return `${d}d ago`;
+    if (h > 0) return `${h}h ago`;
+    if (m > 0) return `${m}m ago`;
+    return 'just now';
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -62,8 +65,8 @@ export default function AppHome({ onNavigateToCall, onNavigateToAlerts }: Props)
               <Text style={styles.demoIcon}>📞</Text>
             </View>
             <View style={styles.demoContent}>
-              <Text style={styles.demoTitle}>Live Scam Demo</Text>
-              <Text style={styles.demoDesc}>See how GuardLine catches a scam</Text>
+              <Text style={styles.demoTitle}>Call Simulation</Text>
+              <Text style={styles.demoDesc}>Test call protection</Text>
             </View>
             <Text style={styles.chevron}>→</Text>
           </TouchableOpacity>
@@ -79,7 +82,7 @@ export default function AppHome({ onNavigateToCall, onNavigateToAlerts }: Props)
               </TouchableOpacity>
             )}
           </View>
-          
+
           <View style={styles.alertsList}>
             {alerts.map((item, idx) => (
               <View
@@ -89,12 +92,18 @@ export default function AppHome({ onNavigateToCall, onNavigateToAlerts }: Props)
                   idx === alerts.length - 1 ? styles.lastRow : null,
                 ]}
               >
-                <Text style={styles.alertIcon}>{item.source === 'call' ? '📞' : '💬'}</Text>
+                <Text style={styles.alertIcon}>
+                  {item.source === 'call' ? '📞' : '💬'}
+                </Text>
                 <View style={styles.alertContent}>
                   <Text style={styles.alertTitle} numberOfLines={1}>
-                    {item.source === 'call' ? 'Scam call blocked' : 'Suspicious text flagged'}
+                    {item.source === 'call'
+                      ? 'Scam call blocked'
+                      : 'Suspicious text flagged'}
                   </Text>
-                  <Text style={styles.alertTime}>{formatTime(item.createdAt)}</Text>
+                  <Text style={styles.alertTime}>
+                    {formatTime(item.createdAt)}
+                  </Text>
                 </View>
                 <View style={styles.riskBadge}>
                   <Text style={styles.riskBadgeText}>{item.riskScore}</Text>
@@ -112,7 +121,7 @@ export default function AppHome({ onNavigateToCall, onNavigateToAlerts }: Props)
         </Text>
       </ScrollView>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -293,4 +302,4 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
     paddingTop: 30,
   },
-})
+});

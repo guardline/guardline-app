@@ -146,7 +146,7 @@ export default function Family({
         <View style={styles.settingsCard}>
           <Text style={styles.settingsTitle}>Alert contact</Text>
           <Text style={styles.settingsDesc}>
-            Shown in demo alerts when a scam is detected. No real SMS is sent.
+            Shown in alerts when a scam is detected.
           </Text>
           <View style={styles.settingsContactRow}>
             <View style={styles.settingsAvatar}>
