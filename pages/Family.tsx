@@ -8,16 +8,23 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native'
-import { getAlerts, getContacts, saveContacts, type AlertEvent, type Contact } from '../lib/store'
+import { getAlerts, getContacts, saveContacts, type AlertEvent, type Contact, type NotifyContact } from '../lib/store'
+import { pickAndSaveNotifyContact } from '../lib/pickNotifyContact'
 
 const EMOJIS = ['👩', '👨', '👴', '👵', '🧑', '👧', '👦', '🧒']
 
-export default function Family() {
+interface Props {
+  notifyContact: NotifyContact
+  onNotifyContactChange: (contact: NotifyContact) => void
+}
+
+export default function Family({ notifyContact, onNotifyContactChange }: Props) {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [alerts, setAlerts] = useState<AlertEvent[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [draft, setDraft] = useState({ name: '', phone: '', relationship: '', emoji: '👩' })
+  const [pickingContact, setPickingContact] = useState(false)
 
   const loadData = () => {
     setContacts(getContacts())
@@ -63,6 +70,16 @@ export default function Family() {
     saveContacts(updated)
   }
 
+  const changeAlertContact = async () => {
+    setPickingContact(true)
+    try {
+      const contact = await pickAndSaveNotifyContact()
+      if (contact) onNotifyContactChange(contact)
+    } finally {
+      setPickingContact(false)
+    }
+  }
+
   const timeAgo = (iso: string) => {
     const ms = Date.now() - new Date(iso).getTime()
     const d = Math.floor(ms / 86400000)
@@ -89,6 +106,32 @@ export default function Family() {
           <TouchableOpacity onPress={openAdd} style={styles.addBtn}>
             <Text style={styles.addBtnText}>+ Add</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Alert contact settings */}
+        <View style={styles.settingsCard}>
+          <Text style={styles.settingsTitle}>Alert contact</Text>
+          <Text style={styles.settingsDesc}>
+            Shown in demo alerts when a scam is detected. No real SMS is sent.
+          </Text>
+          <View style={styles.settingsContactRow}>
+            <View style={styles.settingsAvatar}>
+              <Text style={styles.settingsAvatarText}>📱</Text>
+            </View>
+            <View style={styles.settingsContactInfo}>
+              <Text style={styles.settingsContactName}>{notifyContact.name}</Text>
+              {notifyContact.phone ? (
+                <Text style={styles.settingsContactPhone}>{notifyContact.phone}</Text>
+              ) : null}
+            </View>
+            <TouchableOpacity
+              onPress={changeAlertContact}
+              disabled={pickingContact}
+              style={[styles.changeBtn, pickingContact ? styles.changeBtnDisabled : null]}
+            >
+              <Text style={styles.changeBtnText}>{pickingContact ? '…' : 'Change'}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Add/Edit form */}
@@ -274,6 +317,71 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  settingsCard: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 20,
+  },
+  settingsTitle: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  settingsDesc: {
+    color: 'rgba(255,255,255,0.35)',
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 14,
+  },
+  settingsContactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingsAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(29,70,204,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  settingsAvatarText: {
+    fontSize: 20,
+  },
+  settingsContactInfo: {
+    flex: 1,
+  },
+  settingsContactName: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  settingsContactPhone: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 13,
+    marginTop: 2,
+  },
+  changeBtn: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  changeBtnDisabled: {
+    opacity: 0.5,
+  },
+  changeBtnText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '600',
   },
   formCard: {
     backgroundColor: 'rgba(255,255,255,0.06)',

@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { analyzeScam, type ScamAnalysis } from '../lib/gemini'
-import { addAlert } from '../lib/store'
+import { addAlert, getNotifyContact } from '../lib/store'
 import { speak, stopSpeaking } from '../lib/elevenlabs'
 
 const EXAMPLES = [
@@ -101,6 +101,7 @@ export default function TextChecker() {
 
   const canAnalyze = !loading && (input.trim().length > 0 || isPhotoSelected)
   const vc = result ? VERDICT[result.verdict] : null
+  const notifyName = getNotifyContact()?.name ?? 'your contact'
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -261,7 +262,7 @@ export default function TextChecker() {
                 style={[styles.primaryBtn, alerted ? styles.alertedBtn : null]}
               >
                 <Text style={[styles.primaryBtnText, alerted ? styles.alertedBtnText : null]}>
-                  {alerted ? '✓ Sent' : 'Alert family'}
+                  {alerted ? `✓ Sent to ${notifyName}` : `Alert ${notifyName}`}
                 </Text>
               </TouchableOpacity>
             </View>

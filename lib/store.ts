@@ -16,6 +16,14 @@ export interface Contact {
   emoji: string
 }
 
+/** Contact shown in demo alerts (picked via native contact picker). */
+export interface NotifyContact {
+  name: string
+  phone: string
+}
+
+const NOTIFY_CONTACT_KEY = 'guardline_notify_contact'
+
 const SEED_ALERTS: AlertEvent[] = [
   {
     id: 'seed-1',
@@ -37,13 +45,13 @@ const SEED_ALERTS: AlertEvent[] = [
   },
 ]
 
-const SEED_CONTACTS: Contact[] = [
-  { id: 'c1', name: 'Sarah', phone: '(480) 555-0192', relationship: 'Daughter', emoji: '👩' }
-]
+const SEED_CONTACTS: Contact[] = []
 
 // Simple in-memory storage to survive screen renders
 let alertsCache: AlertEvent[] = [...SEED_ALERTS]
 let contactsCache: Contact[] = [...SEED_CONTACTS]
+let notifyContactCache: NotifyContact | null = null
+let notifyContactLoaded = false
 
 // Generate simple unique IDs without crypto module
 function uuid(): string {
@@ -79,4 +87,38 @@ export function addContact(contact: Omit<Contact, 'id'>): Contact {
   }
   contactsCache = [...contactsCache, c]
   return c
+}
+
+export function getNotifyContact(): NotifyContact | null {
+  return notifyContactCache
+}
+
+export function hasNotifyContact(): boolean {
+  return notifyContactCache !== null
+}
+
+export async function loadNotifyContact(): Promise<NotifyContact | null> {
+  if (notifyContactLoaded) return notifyContactCache
+
+  const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default
+  const raw = await AsyncStorage.getItem(NOTIFY_CONTACT_KEY)
+  notifyContactLoaded = true
+
+  if (raw) {
+    try {
+      notifyContactCache = JSON.parse(raw) as NotifyContact
+    } catch {
+      notifyContactCache = null
+    }
+  }
+
+  return notifyContactCache
+}
+
+export async function setNotifyContact(contact: NotifyContact): Promise<void> {
+  notifyContactCache = contact
+  notifyContactLoaded = true
+
+  const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default
+  await AsyncStorage.setItem(NOTIFY_CONTACT_KEY, JSON.stringify(contact))
 }

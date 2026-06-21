@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native'
 import RiskRing from '../components/RiskRing'
-import { addAlert } from '../lib/store'
+import { addAlert, getNotifyContact } from '../lib/store'
 import { speak, stopSpeaking } from '../lib/elevenlabs'
 
 const SCRIPT = [
@@ -120,11 +120,12 @@ export default function CallDemo({ onBackToHome }: Props) {
       Vibration.vibrate([150, 80, 150, 80, 300])
     } catch {}
 
-    speak('Warning! This call sounds like a scam. Please hang up immediately and call your daughter.').catch(() => {})
+    const contactName = getNotifyContact()?.name ?? 'your contact'
+    speak(`Warning! This call sounds like a scam. Please hang up immediately and call ${contactName}.`).catch(() => {})
 
     Alert.alert(
       '⚠️ SCAM DETECTED',
-      'Warning! This call sounds like a scam. Please hang up immediately and contact family.',
+      `Warning! This call sounds like a scam. Please hang up immediately and call ${contactName}.`,
       [{ text: 'Dismiss' }]
     )
   }, [])
@@ -132,6 +133,7 @@ export default function CallDemo({ onBackToHome }: Props) {
   const triggerSmsSent = useCallback(() => {
     if (smsTriggeredRef.current) return
     smsTriggeredRef.current = true
+    const contactName = getNotifyContact()?.name ?? 'your contact'
     const t = setTimeout(() => {
       setSmsVisible(true)
       addAlert({
@@ -141,7 +143,7 @@ export default function CallDemo({ onBackToHome }: Props) {
         snippet: '"Hello, this is Officer Daniel Morgan with the IRS Criminal Investigation Division…"',
         smsSent: true,
       })
-      speak('Alert sent to Sarah. Your daughter has been notified.').catch(() => {})
+      speak(`Alert sent to ${contactName}. They have been notified.`).catch(() => {})
     }, 2200)
     timersRef.current.push(t)
   }, [])
@@ -206,6 +208,8 @@ export default function CallDemo({ onBackToHome }: Props) {
   const fmtTime = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
+  const notifyName = getNotifyContact()?.name ?? 'your contact'
+
   return (
     <SafeAreaView style={[styles.safe, flashRed ? styles.flashBg : null]}>
       {/* ── IDLE SCREEN ─────────────────────────────────────── */}
@@ -254,7 +258,7 @@ export default function CallDemo({ onBackToHome }: Props) {
               <Text style={styles.alertBannerEmoji}>⚠️</Text>
               <View style={styles.alertBannerTextWrapper}>
                 <Text style={styles.alertBannerTitle}>SCAM DETECTED</Text>
-                <Text style={styles.alertBannerDesc}>Hang up immediately — alerting family</Text>
+                <Text style={styles.alertBannerDesc}>Hang up immediately — alerting {notifyName}</Text>
               </View>
               <View style={styles.alertBannerScoreBadge}>
                 <Text style={styles.alertBannerScoreText}>{displayScore}%</Text>
@@ -334,11 +338,11 @@ export default function CallDemo({ onBackToHome }: Props) {
           {smsVisible ? (
             <View style={styles.smsSlideUp}>
               <View style={styles.smsHeader}>
-                <Text style={styles.smsTitle}>Alert sent to Sarah (daughter)</Text>
+                <Text style={styles.smsTitle}>Alert sent to {notifyName}</Text>
                 <Text style={styles.smsCheck}>✓</Text>
               </View>
               <Text style={styles.smsBody}>
-                "Mom may be on a scam call right now. AI confidence: 94%. Transcript attached. Please call her immediately."
+                "Mom may be on a scam call right now. AI confidence: 94%. Transcript attached. Please call {notifyName} immediately."
               </Text>
               <Text style={styles.smsDeliveredNote}>SMS delivered · just now</Text>
 
@@ -365,7 +369,7 @@ export default function CallDemo({ onBackToHome }: Props) {
             </View>
             <Text style={styles.endedTitle}>You stayed safe.</Text>
             <Text style={styles.endedDesc}>
-              GuardLine detected the scam in {fmtTime(elapsed)} and alerted your family.
+              GuardLine detected the scam in {fmtTime(elapsed)} and alerted {notifyName}.
             </Text>
           </View>
 

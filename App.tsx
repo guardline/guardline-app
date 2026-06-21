@@ -1,25 +1,60 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   StyleSheet,
   View,
   Text,
   TouchableOpacity,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 // Pages
+import SetupContact from './pages/SetupContact'
 import AppHome from './pages/AppHome'
 import TextChecker from './pages/TextChecker'
 import Family from './pages/Family'
 import CallDemo from './pages/CallDemo'
+import { loadNotifyContact, type NotifyContact } from './lib/store'
 
 type Route = 'app' | 'call'
 type Tab = 'home' | 'check' | 'family'
 
 function App() {
+  const [booting, setBooting] = useState(true)
+  const [notifyContact, setNotifyContactState] = useState<NotifyContact | null>(null)
   const [currentRoute, setCurrentRoute] = useState<Route>('app')
   const [currentTab, setCurrentTab] = useState<Tab>('home')
+
+  useEffect(() => {
+    loadNotifyContact()
+      .then(setNotifyContactState)
+      .finally(() => setBooting(false))
+  }, [])
+
+  const handleNotifyContactSaved = (contact: NotifyContact) => {
+    setNotifyContactState(contact)
+  }
+
+  if (booting) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar barStyle="light-content" backgroundColor="#0A0F1E" />
+        <View style={styles.bootScreen}>
+          <ActivityIndicator size="large" color="#2E5CE8" />
+        </View>
+      </SafeAreaProvider>
+    )
+  }
+
+  if (!notifyContact) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar barStyle="light-content" backgroundColor="#0A0F1E" />
+        <SetupContact onComplete={handleNotifyContactSaved} />
+      </SafeAreaProvider>
+    )
+  }
 
   const renderAppContent = () => {
     switch (currentTab) {
@@ -33,7 +68,12 @@ function App() {
       case 'check':
         return <TextChecker />
       case 'family':
-        return <Family />
+        return (
+          <Family
+            notifyContact={notifyContact}
+            onNotifyContactChange={handleNotifyContactSaved}
+          />
+        )
       default:
         return null
     }
@@ -111,6 +151,12 @@ function App() {
 }
 
 const styles = StyleSheet.create({
+  bootScreen: {
+    flex: 1,
+    backgroundColor: '#0A0F1E',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: '#0A0F1E',
