@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAudioStream } from './useAudioStream';
-import { createDeepgramStream, type DeepgramStream } from '../lib/deepgram';
+import {
+  createElevenLabsSTTStream,
+  type STTStream,
+} from '../lib/elevenlabs-stt';
 import { analyzeCallTranscript, type ScamAnalysis } from '../lib/gemini';
 import { addAlert } from '../lib/store';
 
@@ -11,7 +14,7 @@ export function useCallMonitor() {
   const [isListening, setIsListening] = useState(false);
   const [scamResult, setScamResult] = useState<ScamAnalysis | null>(null);
   const transcriptRef = useRef('');
-  const deepgramRef = useRef<DeepgramStream | null>(null);
+  const sttRef = useRef<STTStream | null>(null);
   const analysisTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const analyzingRef = useRef(false);
 
@@ -25,35 +28,33 @@ export function useCallMonitor() {
     [],
   );
 
-  const handleDeepgramError = useCallback((_error: string) => {
-    // silently handle — Deepgram may fail if no key configured
+  const handleSTTError = useCallback((_error: string) => {
+    // silently handle
   }, []);
 
   const handleAudioChunk = useCallback((base64Chunk: string) => {
-    deepgramRef.current?.sendAudio(base64Chunk);
+    sttRef.current?.sendAudio(base64Chunk);
   }, []);
 
   const { isListening: nativeListening } = useAudioStream(handleAudioChunk);
 
-  // Sync native listening state
   useEffect(() => {
     setIsListening(nativeListening);
   }, [nativeListening]);
 
-  // Connect/disconnect Deepgram based on listening state
   useEffect(() => {
     if (isListening) {
-      deepgramRef.current = createDeepgramStream(
+      sttRef.current = createElevenLabsSTTStream(
         handleTranscript,
-        handleDeepgramError,
+        handleSTTError,
       );
-      deepgramRef.current.connect();
+      sttRef.current.connect();
     } else {
-      deepgramRef.current?.close();
-      deepgramRef.current = null;
+      sttRef.current?.close();
+      sttRef.current = null;
       transcriptRef.current = '';
     }
-  }, [isListening, handleTranscript, handleDeepgramError]);
+  }, [isListening, handleTranscript, handleSTTError]);
 
   // Periodically send accumulated transcript to Gemini
   useEffect(() => {
