@@ -9,6 +9,11 @@ class ScamAccessibilityService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        getSharedPreferences("guardline", MODE_PRIVATE)
+            .edit()
+            .putBoolean("accessibility_enabled", true)
+            .apply()
+
         val info = AccessibilityServiceInfo().apply {
             eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
@@ -19,6 +24,14 @@ class ScamAccessibilityService : AccessibilityService() {
             )
         }
         serviceInfo = info
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        getSharedPreferences("guardline", MODE_PRIVATE)
+            .edit()
+            .putBoolean("accessibility_enabled", false)
+            .apply()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {

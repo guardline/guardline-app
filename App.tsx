@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,46 +6,46 @@ import {
   TouchableOpacity,
   StatusBar,
   ActivityIndicator,
-} from 'react-native'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
+} from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Pages
-import SetupContact from './pages/SetupContact'
-import AppHome from './pages/AppHome'
-import TextChecker from './pages/TextChecker'
-import Family from './pages/Family'
-import CallDemo from './pages/CallDemo'
-import { loadNotifyContact, type NotifyContact } from './lib/store'
+import SetupContact from './pages/SetupContact';
+import SetupPermissions from './pages/SetupPermissions';
+import AppHome from './pages/AppHome';
+import TextChecker from './pages/TextChecker';
+import Family from './pages/Family';
+import CallDemo from './pages/CallDemo';
+import { loadNotifyContact, type NotifyContact } from './lib/store';
 
-type Route = 'app' | 'call'
-type Tab = 'home' | 'check' | 'family'
+type Route = 'app' | 'call';
+type Tab = 'home' | 'check' | 'family';
+type OnboardingPhase = 'contact' | 'permissions' | 'done';
 
 function App() {
-  const [booting, setBooting] = useState(true)
-  const [notifyContact, setNotifyContactState] = useState<NotifyContact | null>(null)
-  const [currentRoute, setCurrentRoute] = useState<Route>('app')
-  const [currentTab, setCurrentTab] = useState<Tab>('home')
+  const [booting, setBooting] = useState(true);
+  const [notifyContact, setNotifyContactState] = useState<NotifyContact | null>(
+    null,
+  );
+  const [onboardingPhase, setOnboardingPhase] =
+    useState<OnboardingPhase>('contact');
+  const [currentRoute, setCurrentRoute] = useState<Route>('app');
+  const [currentTab, setCurrentTab] = useState<Tab>('home');
 
   useEffect(() => {
     loadNotifyContact()
       .then(setNotifyContactState)
-      .finally(() => setBooting(false))
-  }, [])
+      .finally(() => setBooting(false));
+  }, []);
 
   const handleNotifyContactSaved = (contact: NotifyContact) => {
-    setNotifyContactState(contact)
-  }
+    setNotifyContactState(contact);
+    setOnboardingPhase('permissions');
+  };
 
-  if (booting) {
-    return (
-      <SafeAreaProvider>
-        <StatusBar barStyle="light-content" backgroundColor="#0A0F1E" />
-        <View style={styles.bootScreen}>
-          <ActivityIndicator size="large" color="#2E5CE8" />
-        </View>
-      </SafeAreaProvider>
-    )
-  }
+  const handlePermissionsComplete = () => {
+    setOnboardingPhase('done');
+  };
 
   if (!notifyContact) {
     return (
@@ -53,7 +53,16 @@ function App() {
         <StatusBar barStyle="light-content" backgroundColor="#0A0F1E" />
         <SetupContact onComplete={handleNotifyContactSaved} />
       </SafeAreaProvider>
-    )
+    );
+  }
+
+  if (onboardingPhase === 'permissions') {
+    return (
+      <SafeAreaProvider>
+        <StatusBar barStyle="light-content" backgroundColor="#0A0F1E" />
+        <SetupPermissions onComplete={handlePermissionsComplete} />
+      </SafeAreaProvider>
+    );
   }
 
   const renderAppContent = () => {
@@ -64,25 +73,25 @@ function App() {
             onNavigateToCall={() => setCurrentRoute('call')}
             onNavigateToAlerts={() => setCurrentTab('family')}
           />
-        )
+        );
       case 'check':
-        return <TextChecker />
+        return <TextChecker />;
       case 'family':
         return (
           <Family
             notifyContact={notifyContact}
             onNotifyContactChange={handleNotifyContactSaved}
           />
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   const renderMainContent = () => {
     switch (currentRoute) {
       case 'call':
-        return <CallDemo onBackToHome={() => setCurrentRoute('app')} />
+        return <CallDemo onBackToHome={() => setCurrentRoute('app')} />;
       case 'app':
         return (
           <View style={styles.appWrapper}>
@@ -107,8 +116,8 @@ function App() {
                   label: 'Family',
                   icon: '👨‍👩‍👧',
                 },
-              ].map((tab) => {
-                const isActive = currentTab === tab.id
+              ].map(tab => {
+                const isActive = currentTab === tab.id;
                 return (
                   <TouchableOpacity
                     key={tab.id}
@@ -118,7 +127,9 @@ function App() {
                     <Text
                       style={[
                         styles.tabIcon,
-                        isActive ? styles.tabIconActive : styles.tabIconInactive,
+                        isActive
+                          ? styles.tabIconActive
+                          : styles.tabIconInactive,
                       ]}
                     >
                       {tab.icon}
@@ -126,28 +137,30 @@ function App() {
                     <Text
                       style={[
                         styles.tabLabel,
-                        isActive ? styles.tabLabelActive : styles.tabLabelInactive,
+                        isActive
+                          ? styles.tabLabelActive
+                          : styles.tabLabelInactive,
                       ]}
                     >
                       {tab.label}
                     </Text>
                   </TouchableOpacity>
-                )
+                );
               })}
             </View>
           </View>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor="#0A0F1E" />
       <View style={styles.container}>{renderMainContent()}</View>
     </SafeAreaProvider>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -201,6 +214,6 @@ const styles = StyleSheet.create({
   tabLabelInactive: {
     color: 'rgba(255, 255, 255, 0.3)',
   },
-})
+});
 
-export default App
+export default App;

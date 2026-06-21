@@ -1,6 +1,9 @@
 package dev.ehan.guardline
 
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -42,6 +45,33 @@ class AudioModule(reactContext: ReactApplicationContext) :
             android.provider.Settings.canDrawOverlays(reactApplicationContext)
         } else true
         promise.resolve(granted)
+    }
+
+    @ReactMethod
+    fun hasAccessibilityEnabled(promise: Promise) {
+        val enabled = reactApplicationContext
+            .getSharedPreferences("guardline", 0)
+            .getBoolean("accessibility_enabled", false)
+        promise.resolve(enabled)
+    }
+
+    @ReactMethod
+    fun openAccessibilitySettings() {
+        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        reactApplicationContext.startActivity(intent)
+    }
+
+    @ReactMethod
+    fun openOverlaySettings() {
+        val intent = Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:${reactApplicationContext.packageName}")
+        ).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        reactApplicationContext.startActivity(intent)
     }
 
     @ReactMethod
