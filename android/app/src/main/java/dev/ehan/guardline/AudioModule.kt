@@ -24,6 +24,12 @@ class AudioModule(reactContext: ReactApplicationContext) :
                 ?.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
                 ?.emit("audioChunk", base64)
         }
+
+        fun sendListeningState(isListening: Boolean) {
+            moduleContext
+                ?.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                ?.emit("listeningState", isListening)
+        }
     }
 
     init {

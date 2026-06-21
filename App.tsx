@@ -16,7 +16,12 @@ import AppHome from './pages/AppHome';
 import TextChecker from './pages/TextChecker';
 import Family from './pages/Family';
 import CallDemo from './pages/CallDemo';
-import { loadNotifyContact, type NotifyContact } from './lib/store';
+import CallMonitor from './components/CallMonitor';
+import {
+  loadNotifyContact,
+  getSettings,
+  type NotifyContact,
+} from './lib/store';
 
 type Route = 'app' | 'call';
 type Tab = 'home' | 'check' | 'family';
@@ -29,6 +34,7 @@ function App() {
   );
   const [onboardingPhase, setOnboardingPhase] =
     useState<OnboardingPhase>('contact');
+  const [settings, setSettings] = useState(getSettings());
   const [currentRoute, setCurrentRoute] = useState<Route>('app');
   const [currentTab, setCurrentTab] = useState<Tab>('home');
 
@@ -45,6 +51,10 @@ function App() {
 
   const handlePermissionsComplete = () => {
     setOnboardingPhase('done');
+  };
+
+  const handleSettingsChange = (s: typeof settings) => {
+    setSettings(s);
   };
 
   if (!notifyContact) {
@@ -81,6 +91,7 @@ function App() {
           <Family
             notifyContact={notifyContact}
             onNotifyContactChange={handleNotifyContactSaved}
+            onSettingsChange={handleSettingsChange}
           />
         );
       default:
@@ -158,7 +169,10 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor="#0A0F1E" />
-      <View style={styles.container}>{renderMainContent()}</View>
+      <View style={styles.container}>
+        {renderMainContent()}
+        <CallMonitor showListeningIndicator={settings.showListeningIndicator} />
+      </View>
     </SafeAreaProvider>
   );
 }

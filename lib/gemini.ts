@@ -1,9 +1,20 @@
 export interface ScamAnalysis {
-  verdict: 'safe' | 'suspicious' | 'scam'
-  riskScore: number
-  redFlags: string[]
-  explanation: string
-  whatToDo: string
+  verdict: 'safe' | 'suspicious' | 'scam';
+  riskScore: number;
+  redFlags: string[];
+  explanation: string;
+  whatToDo: string;
+}
+
+export async function analyzeCallTranscript(
+  transcript: string,
+): Promise<ScamAnalysis> {
+  const parts = [
+    {
+      text: `${SYSTEM_PROMPT}\n\nThis is a real-time transcript of a phone call. Analyze it for scam indicators.\nCall transcript:\n${transcript}`,
+    },
+  ];
+  return callGemini(parts);
 }
 
 const SYSTEM_PROMPT = `You are a scam detection AI protecting seniors from phone and text scams.
@@ -15,10 +26,10 @@ Schema:
   "redFlags": ["string"],
   "explanation": "2-3 sentence explanation written clearly for a senior",
   "whatToDo": "Specific actionable advice for a senior citizen"
-}`
+}`;
 
 async function callGemini(parts: object[]): Promise<ScamAnalysis> {
-  const apiKey = "AQ.Ab8RN6KpZGznVv1hqNmfevOEckWSFZBunJP6tsLT0Ep0kXOJCQ"
+  const apiKey = 'AQ.Ab8RN6KpZGznVv1hqNmfevOEckWSFZBunJP6tsLT0Ep0kXOJCQ';
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -30,63 +41,81 @@ async function callGemini(parts: object[]): Promise<ScamAnalysis> {
         generationConfig: { temperature: 0.1, maxOutputTokens: 512 },
       }),
     },
-  )
+  );
 
   if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Gemini ${res.status}: ${err}`)
+    const err = await res.text();
+    throw new Error(`Gemini ${res.status}: ${err}`);
   }
 
-  const data = await res.json()
-  const raw: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-  const match = raw.match(/\{[\s\S]*\}/)
-  if (!match) throw new Error('No JSON in response')
-  return JSON.parse(match[0]) as ScamAnalysis
+  const data = await res.json();
+  const raw: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('No JSON in response');
+  return JSON.parse(match[0]) as ScamAnalysis;
 }
 
 export async function analyzeScam(message: string): Promise<ScamAnalysis> {
-  const parts = [{ text: `${SYSTEM_PROMPT}\n\nMessage to analyze:\n${message}` }]
+  const parts = [
+    { text: `${SYSTEM_PROMPT}\n\nMessage to analyze:\n${message}` },
+  ];
   try {
-    return await callGemini(parts)
+    return await callGemini(parts);
   } catch (e: unknown) {
     if (e instanceof Error && e.message === 'NO_KEY') {
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 1500))
-      return mockAnalysis(message)
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 1500));
+      return mockAnalysis(message);
     }
-    throw e
+    throw e;
   }
 }
 
 export async function analyzeScamImage(dataUrl: string): Promise<ScamAnalysis> {
-  const mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg'
-  const base64 = dataUrl.split(',')[1]
+  const mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
+  const base64 = dataUrl.split(',')[1];
 
   const parts = [
     { inlineData: { mimeType, data: base64 } },
     {
       text: `${SYSTEM_PROMPT}\n\nLook at this screenshot. Extract all visible text and analyze whether it represents a scam targeting seniors.`,
     },
-  ]
+  ];
 
   try {
-    return await callGemini(parts)
+    return await callGemini(parts);
   } catch (e: unknown) {
     if (e instanceof Error && e.message === 'NO_KEY') {
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 1800))
-      return mockAnalysis('[Screenshot uploaded — no API key for real analysis]')
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 1800));
+      return mockAnalysis(
+        '[Screenshot uploaded — no API key for real analysis]',
+      );
     }
-    throw e
+    throw e;
   }
 }
 
 function mockAnalysis(message: string): ScamAnalysis {
-  const msg = message.toLowerCase()
+  const msg = message.toLowerCase();
   const scamWords = [
-    'irs', 'warrant', 'arrest', 'gift card', 'google play', 'immediate',
-    'unpaid taxes', 'refund', 'suspended', 'verify your account', 'grandchild',
-    'jail', 'bail', 'amazon', 'prize', 'winner', 'social security',
-  ]
-  const hits = scamWords.filter((w) => msg.includes(w))
+    'irs',
+    'warrant',
+    'arrest',
+    'gift card',
+    'google play',
+    'immediate',
+    'unpaid taxes',
+    'refund',
+    'suspended',
+    'verify your account',
+    'grandchild',
+    'jail',
+    'bail',
+    'amazon',
+    'prize',
+    'winner',
+    'social security',
+  ];
+  const hits = scamWords.filter(w => msg.includes(w));
 
   if (hits.length >= 2) {
     return {
@@ -102,7 +131,7 @@ function mockAnalysis(message: string): ScamAnalysis {
         'This message contains multiple hallmarks of a classic impersonation scam. Legitimate agencies never contact you by phone or text to demand immediate payment, and they never ask for gift cards.',
       whatToDo:
         'Hang up or ignore immediately. Do NOT call back. Tell a trusted family member. If it involves taxes, call the IRS directly at 1-800-829-1040.',
-    }
+    };
   }
 
   if (hits.length === 1) {
@@ -114,14 +143,16 @@ function mockAnalysis(message: string): ScamAnalysis {
         'This message has some suspicious elements worth being cautious about. Legitimate organizations rarely contact you out of the blue with urgent demands.',
       whatToDo:
         'Do not respond yet. Verify by calling the organization directly using a number from their official website — not the number in this message.',
-    }
+    };
   }
 
   return {
     verdict: 'safe',
     riskScore: 6,
     redFlags: [],
-    explanation: 'This message does not contain typical scam indicators and appears to be legitimate.',
-    whatToDo: 'This looks safe. If you still have doubts, verify by calling the sender at a number you already know and trust.',
-  }
+    explanation:
+      'This message does not contain typical scam indicators and appears to be legitimate.',
+    whatToDo:
+      'This looks safe. If you still have doubts, verify by calling the sender at a number you already know and trust.',
+  };
 }

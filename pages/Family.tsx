@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,92 +7,126 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-} from 'react-native'
-import { getAlerts, getContacts, saveContacts, type AlertEvent, type Contact, type NotifyContact } from '../lib/store'
-import { pickAndSaveNotifyContact } from '../lib/pickNotifyContact'
+  Switch,
+} from 'react-native';
+import {
+  getAlerts,
+  getContacts,
+  saveContacts,
+  getSettings,
+  updateSettings,
+  type AlertEvent,
+  type Contact,
+  type NotifyContact,
+  type AppSettings,
+} from '../lib/store';
+import { pickAndSaveNotifyContact } from '../lib/pickNotifyContact';
 
-const EMOJIS = ['👩', '👨', '👴', '👵', '🧑', '👧', '👦', '🧒']
+const EMOJIS = ['👩', '👨', '👴', '👵', '🧑', '👧', '👦', '🧒'];
 
 interface Props {
-  notifyContact: NotifyContact
-  onNotifyContactChange: (contact: NotifyContact) => void
+  notifyContact: NotifyContact;
+  onNotifyContactChange: (contact: NotifyContact) => void;
+  onSettingsChange?: (settings: AppSettings) => void;
 }
 
-export default function Family({ notifyContact, onNotifyContactChange }: Props) {
-  const [contacts, setContacts] = useState<Contact[]>([])
-  const [alerts, setAlerts] = useState<AlertEvent[]>([])
-  const [showForm, setShowForm] = useState(false)
-  const [editId, setEditId] = useState<string | null>(null)
-  const [draft, setDraft] = useState({ name: '', phone: '', relationship: '', emoji: '👩' })
-  const [pickingContact, setPickingContact] = useState(false)
+export default function Family({
+  notifyContact,
+  onNotifyContactChange,
+  onSettingsChange,
+}: Props) {
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [alerts, setAlerts] = useState<AlertEvent[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [draft, setDraft] = useState({
+    name: '',
+    phone: '',
+    relationship: '',
+    emoji: '👩',
+  });
+  const [pickingContact, setPickingContact] = useState(false);
+  const [settings, setSettings] = useState<AppSettings>(getSettings());
+
+  const toggleListeningIndicator = (val: boolean) => {
+    const updated = updateSettings({ showListeningIndicator: val });
+    setSettings(updated);
+    onSettingsChange?.(updated);
+  };
 
   const loadData = () => {
-    setContacts(getContacts())
-    setAlerts(getAlerts())
-  }
+    setContacts(getContacts());
+    setAlerts(getAlerts());
+  };
 
   useEffect(() => {
-    loadData()
-  }, [])
+    loadData();
+  }, []);
 
   const openAdd = () => {
-    setDraft({ name: '', phone: '', relationship: '', emoji: '👩' })
-    setEditId(null)
-    setShowForm(true)
-  }
+    setDraft({ name: '', phone: '', relationship: '', emoji: '👩' });
+    setEditId(null);
+    setShowForm(true);
+  };
 
   const openEdit = (c: Contact) => {
-    setDraft(c)
-    setEditId(c.id)
-    setShowForm(true)
-  }
+    setDraft(c);
+    setEditId(c.id);
+    setShowForm(true);
+  };
 
   const saveForm = () => {
-    if (!draft.name.trim()) return
-    let updated: Contact[]
+    if (!draft.name.trim()) return;
+    let updated: Contact[];
     if (editId) {
-      updated = contacts.map(c => (c.id === editId ? { ...c, ...draft } : c))
+      updated = contacts.map(c => (c.id === editId ? { ...c, ...draft } : c));
     } else {
       const newContact: Contact = {
         ...draft,
         id: Math.random().toString(36).substring(2, 11),
-      }
-      updated = [...contacts, newContact]
+      };
+      updated = [...contacts, newContact];
     }
-    setContacts(updated)
-    saveContacts(updated)
-    setShowForm(false)
-  }
+    setContacts(updated);
+    saveContacts(updated);
+    setShowForm(false);
+  };
 
   const deleteContact = (id: string) => {
-    const updated = contacts.filter(c => c.id !== id)
-    setContacts(updated)
-    saveContacts(updated)
-  }
+    const updated = contacts.filter(c => c.id !== id);
+    setContacts(updated);
+    saveContacts(updated);
+  };
 
   const changeAlertContact = async () => {
-    setPickingContact(true)
+    setPickingContact(true);
     try {
-      const contact = await pickAndSaveNotifyContact()
-      if (contact) onNotifyContactChange(contact)
+      const contact = await pickAndSaveNotifyContact();
+      if (contact) onNotifyContactChange(contact);
     } finally {
-      setPickingContact(false)
+      setPickingContact(false);
     }
-  }
+  };
 
   const timeAgo = (iso: string) => {
-    const ms = Date.now() - new Date(iso).getTime()
-    const d = Math.floor(ms / 86400000)
-    const h = Math.floor(ms / 3600000)
-    const m = Math.floor(ms / 60000)
-    return d > 0 ? `${d}d ago` : h > 0 ? `${h}h ago` : m > 0 ? `${m}m ago` : 'just now'
-  }
+    const ms = Date.now() - new Date(iso).getTime();
+    const d = Math.floor(ms / 86400000);
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor(ms / 60000);
+    return d > 0
+      ? `${d}d ago`
+      : h > 0
+      ? `${h}h ago`
+      : m > 0
+      ? `${m}m ago`
+      : 'just now';
+  };
 
   const riskStyle = (score: number) => {
-    if (score >= 70) return { bg: 'rgba(239,68,68,0.12)', color: '#EF4444' }
-    if (score >= 40) return { bg: 'rgba(245,158,11,0.12)', color: '#F59E0B' }
-    return { bg: 'rgba(34,197,94,0.12)', color: '#22C55E' }
-  }
+    if (score >= 70) return { bg: 'rgba(239,68,68,0.12)', color: '#EF4444' };
+    if (score >= 40) return { bg: 'rgba(245,158,11,0.12)', color: '#F59E0B' };
+    return { bg: 'rgba(34,197,94,0.12)', color: '#22C55E' };
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -119,18 +153,49 @@ export default function Family({ notifyContact, onNotifyContactChange }: Props) 
               <Text style={styles.settingsAvatarText}>📱</Text>
             </View>
             <View style={styles.settingsContactInfo}>
-              <Text style={styles.settingsContactName}>{notifyContact.name}</Text>
+              <Text style={styles.settingsContactName}>
+                {notifyContact.name}
+              </Text>
               {notifyContact.phone ? (
-                <Text style={styles.settingsContactPhone}>{notifyContact.phone}</Text>
+                <Text style={styles.settingsContactPhone}>
+                  {notifyContact.phone}
+                </Text>
               ) : null}
             </View>
             <TouchableOpacity
               onPress={changeAlertContact}
               disabled={pickingContact}
-              style={[styles.changeBtn, pickingContact ? styles.changeBtnDisabled : null]}
+              style={[
+                styles.changeBtn,
+                pickingContact ? styles.changeBtnDisabled : null,
+              ]}
             >
-              <Text style={styles.changeBtnText}>{pickingContact ? '…' : 'Change'}</Text>
+              <Text style={styles.changeBtnText}>
+                {pickingContact ? '…' : 'Change'}
+              </Text>
             </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Listening indicator toggle */}
+        <View style={styles.settingsCard}>
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleContent}>
+              <Text style={styles.settingsTitle}>Listening indicator</Text>
+              <Text style={styles.settingsDesc}>
+                Show a small &ldquo;Listening&rdquo; badge during active call
+                monitoring.
+              </Text>
+            </View>
+            <Switch
+              value={settings.showListeningIndicator}
+              onValueChange={toggleListeningIndicator}
+              trackColor={{
+                false: 'rgba(255,255,255,0.15)',
+                true: 'rgba(29,70,204,0.5)',
+              }}
+              thumbColor={settings.showListeningIndicator ? '#2E5CE8' : '#888'}
+            />
           </View>
         </View>
 
@@ -143,7 +208,7 @@ export default function Family({ notifyContact, onNotifyContactChange }: Props) 
 
             {/* Emoji picker */}
             <View style={styles.emojiRow}>
-              {EMOJIS.map((e) => (
+              {EMOJIS.map(e => (
                 <TouchableOpacity
                   key={e}
                   onPress={() => setDraft(d => ({ ...d, emoji: e }))}
@@ -162,7 +227,7 @@ export default function Family({ notifyContact, onNotifyContactChange }: Props) 
               <Text style={styles.fieldLabel}>Name</Text>
               <TextInput
                 value={draft.name}
-                onChangeText={(val) => setDraft(d => ({ ...d, name: val }))}
+                onChangeText={val => setDraft(d => ({ ...d, name: val }))}
                 placeholder="Sarah"
                 placeholderTextColor="rgba(255,255,255,0.2)"
                 style={styles.input}
@@ -173,7 +238,7 @@ export default function Family({ notifyContact, onNotifyContactChange }: Props) 
               <Text style={styles.fieldLabel}>Phone</Text>
               <TextInput
                 value={draft.phone}
-                onChangeText={(val) => setDraft(d => ({ ...d, phone: val }))}
+                onChangeText={val => setDraft(d => ({ ...d, phone: val }))}
                 placeholder="(480) 555-0192"
                 placeholderTextColor="rgba(255,255,255,0.2)"
                 style={styles.input}
@@ -184,7 +249,9 @@ export default function Family({ notifyContact, onNotifyContactChange }: Props) 
               <Text style={styles.fieldLabel}>Relationship</Text>
               <TextInput
                 value={draft.relationship}
-                onChangeText={(val) => setDraft(d => ({ ...d, relationship: val }))}
+                onChangeText={val =>
+                  setDraft(d => ({ ...d, relationship: val }))
+                }
                 placeholder="Daughter"
                 placeholderTextColor="rgba(255,255,255,0.2)"
                 style={styles.input}
@@ -192,15 +259,23 @@ export default function Family({ notifyContact, onNotifyContactChange }: Props) 
             </View>
 
             <View style={styles.formActions}>
-              <TouchableOpacity onPress={() => setShowForm(false)} style={styles.cancelBtn}>
+              <TouchableOpacity
+                onPress={() => setShowForm(false)}
+                style={styles.cancelBtn}
+              >
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={saveForm}
                 disabled={!draft.name.trim()}
-                style={[styles.saveBtn, !draft.name.trim() ? styles.saveBtnDisabled : null]}
+                style={[
+                  styles.saveBtn,
+                  !draft.name.trim() ? styles.saveBtnDisabled : null,
+                ]}
               >
-                <Text style={styles.saveBtnText}>{editId ? 'Save' : 'Add contact'}</Text>
+                <Text style={styles.saveBtnText}>
+                  {editId ? 'Save' : 'Add contact'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -208,9 +283,11 @@ export default function Family({ notifyContact, onNotifyContactChange }: Props) 
 
         {/* Contacts Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Trusted Contacts ({contacts.length})</Text>
+          <Text style={styles.sectionHeader}>
+            Trusted Contacts ({contacts.length})
+          </Text>
           <View style={styles.contactsList}>
-            {contacts.map((c) => (
+            {contacts.map(c => (
               <View key={c.id} style={styles.contactCard}>
                 <View style={styles.contactAvatar}>
                   <Text style={styles.contactAvatarText}>{c.emoji}</Text>
@@ -219,31 +296,43 @@ export default function Family({ notifyContact, onNotifyContactChange }: Props) 
                   <Text style={styles.contactName}>{c.name}</Text>
                   <Text style={styles.contactPhone}>{c.phone}</Text>
                   <View style={styles.relationshipBadge}>
-                    <Text style={styles.relationshipText}>{c.relationship}</Text>
+                    <Text style={styles.relationshipText}>
+                      {c.relationship}
+                    </Text>
                   </View>
                 </View>
                 <View style={styles.contactActions}>
-                  <TouchableOpacity onPress={() => openEdit(c)} style={styles.actionIconButton}>
+                  <TouchableOpacity
+                    onPress={() => openEdit(c)}
+                    style={styles.actionIconButton}
+                  >
                     <Text style={styles.actionIcon}>✏️</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => deleteContact(c.id)} style={styles.actionIconButton}>
+                  <TouchableOpacity
+                    onPress={() => deleteContact(c.id)}
+                    style={styles.actionIconButton}
+                  >
                     <Text style={styles.actionIcon}>🗑️</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             ))}
             {contacts.length === 0 && (
-              <Text style={styles.emptyText}>No contacts yet. Tap + Add above.</Text>
+              <Text style={styles.emptyText}>
+                No contacts yet. Tap + Add above.
+              </Text>
             )}
           </View>
         </View>
 
         {/* Alerts Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Alert History ({alerts.length})</Text>
+          <Text style={styles.sectionHeader}>
+            Alert History ({alerts.length})
+          </Text>
           <View style={styles.alertsList}>
-            {alerts.map((a) => {
-              const rs = riskStyle(a.riskScore)
+            {alerts.map(a => {
+              const rs = riskStyle(a.riskScore);
               return (
                 <View key={a.id} style={styles.alertCard}>
                   <Text style={styles.alertSourceIcon}>
@@ -252,16 +341,25 @@ export default function Family({ notifyContact, onNotifyContactChange }: Props) 
                   <View style={styles.alertCardContent}>
                     <View style={styles.alertMetaRow}>
                       <Text style={styles.alertMetaText}>
-                        {a.source === 'call' ? 'Phone call' : 'Text'} · {timeAgo(a.createdAt)}
+                        {a.source === 'call' ? 'Phone call' : 'Text'} ·{' '}
+                        {timeAgo(a.createdAt)}
                       </Text>
-                      {a.smsSent && <Text style={styles.smsSentTag}>SMS sent ✓</Text>}
+                      {a.smsSent && (
+                        <Text style={styles.smsSentTag}>SMS sent ✓</Text>
+                      )}
                     </View>
-                    <Text style={styles.snippetText} numberOfLines={2}>{a.snippet}</Text>
+                    <Text style={styles.snippetText} numberOfLines={2}>
+                      {a.snippet}
+                    </Text>
                     <View style={styles.flagsRow}>
-                      <View style={[styles.riskTag, { backgroundColor: rs.bg }]}>
-                        <Text style={[styles.riskTagText, { color: rs.color }]}>Risk {a.riskScore}</Text>
+                      <View
+                        style={[styles.riskTag, { backgroundColor: rs.bg }]}
+                      >
+                        <Text style={[styles.riskTagText, { color: rs.color }]}>
+                          Risk {a.riskScore}
+                        </Text>
                       </View>
-                      {a.flags.slice(0, 2).map((f) => (
+                      {a.flags.slice(0, 2).map(f => (
                         <View key={f} style={styles.flagTag}>
                           <Text style={styles.flagTagText}>{f}</Text>
                         </View>
@@ -269,7 +367,7 @@ export default function Family({ notifyContact, onNotifyContactChange }: Props) 
                     </View>
                   </View>
                 </View>
-              )
+              );
             })}
             {alerts.length === 0 && (
               <Text style={styles.emptyText}>No alerts generated yet.</Text>
@@ -278,7 +376,7 @@ export default function Family({ notifyContact, onNotifyContactChange }: Props) 
         </View>
       </ScrollView>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -617,4 +715,13 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.45)',
     fontSize: 10,
   },
-})
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  toggleContent: {
+    flex: 1,
+    marginRight: 16,
+  },
+});

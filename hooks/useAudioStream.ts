@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   NativeModules,
   NativeEventEmitter,
@@ -11,21 +11,28 @@ const { AudioModule } = NativeModules;
 type AudioChunkHandler = (base64Chunk: string) => void;
 
 export function useAudioStream(onChunk: AudioChunkHandler) {
-  const listenerRef = useRef<any>(null);
-  const emitterRef = useRef<NativeEventEmitter | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const chunkListenerRef = useRef<any>(null);
+  const stateListenerRef = useRef<any>(null);
 
   useEffect(() => {
     if (!AudioModule) return;
 
-    emitterRef.current = new NativeEventEmitter(AudioModule);
-    listenerRef.current = emitterRef.current.addListener('audioChunk', onChunk);
+    const emitter = new NativeEventEmitter(AudioModule);
+
+    chunkListenerRef.current = emitter.addListener('audioChunk', onChunk);
+    stateListenerRef.current = emitter.addListener(
+      'listeningState',
+      (listening: boolean) => setIsListening(listening),
+    );
 
     return () => {
-      listenerRef.current?.remove();
+      chunkListenerRef.current?.remove();
+      stateListenerRef.current?.remove();
     };
   }, [onChunk]);
 
-  return { isAvailable: !!AudioModule };
+  return { isAvailable: !!AudioModule, isListening };
 }
 
 export async function requestMicrophonePermission(): Promise<boolean> {

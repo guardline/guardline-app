@@ -43,6 +43,7 @@ class ScamForegroundService : Service() {
     private fun startRecording() {
         if (isRecording) return
         isRecording = true
+        AudioModule.sendListeningState(true)
 
         val sampleRate = 16000
         val bufferSize = AudioRecord.getMinBufferSize(
@@ -77,6 +78,7 @@ class ScamForegroundService : Service() {
 
     private fun stopRecording() {
         isRecording = false
+        AudioModule.sendListeningState(false)
         try {
             recorder?.stop()
             recorder?.release()
