@@ -8,10 +8,10 @@ import {
   ScrollView,
   SafeAreaView,
   ActivityIndicator,
-  Alert,
 } from 'react-native'
 import { analyzeScam, type ScamAnalysis } from '../lib/gemini'
 import { addAlert } from '../lib/store'
+import { speak, stopSpeaking } from '../lib/elevenlabs'
 
 const EXAMPLES = [
   { label: 'IRS warrant', text: 'This is the IRS. A federal warrant has been issued for your arrest due to unpaid taxes. To prevent immediate arrest, call 888-555-0199 and pay $2,400 in Google Play gift cards today.' },
@@ -76,7 +76,8 @@ export default function TextChecker() {
 
   const readAloud = () => {
     if (!result) return
-    Alert.alert('AI Feedback', `${result.explanation}\n\n${result.whatToDo}`)
+    stopSpeaking()
+    speak(`${result.explanation} ${result.whatToDo}`).catch(() => {})
   }
 
   const alertFamily = () => {

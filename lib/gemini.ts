@@ -18,9 +18,7 @@ Schema:
 }`
 
 async function callGemini(parts: object[]): Promise<ScamAnalysis> {
-  const env = (globalThis as any).process?.env || {};
-  const apiKey = env.VITE_GEMINI_API_KEY
-  if (!apiKey || apiKey === 'your_gemini_api_key_here') throw new Error('NO_KEY')
+  const apiKey = "AQ.Ab8RN6KpZGznVv1hqNmfevOEckWSFZBunJP6tsLT0Ep0kXOJCQ"
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,

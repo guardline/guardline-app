@@ -12,6 +12,7 @@ import {
 } from 'react-native'
 import RiskRing from '../components/RiskRing'
 import { addAlert } from '../lib/store'
+import { speak, stopSpeaking } from '../lib/elevenlabs'
 
 const SCRIPT = [
   {
@@ -119,6 +120,8 @@ export default function CallDemo({ onBackToHome }: Props) {
       Vibration.vibrate([150, 80, 150, 80, 300])
     } catch {}
 
+    speak('Warning! This call sounds like a scam. Please hang up immediately and call your daughter.').catch(() => {})
+
     Alert.alert(
       '⚠️ SCAM DETECTED',
       'Warning! This call sounds like a scam. Please hang up immediately and contact family.',
@@ -138,6 +141,7 @@ export default function CallDemo({ onBackToHome }: Props) {
         snippet: '"Hello, this is Officer Daniel Morgan with the IRS Criminal Investigation Division…"',
         smsSent: true,
       })
+      speak('Alert sent to Sarah. Your daughter has been notified.').catch(() => {})
     }, 2200)
     timersRef.current.push(t)
   }, [])
@@ -146,6 +150,7 @@ export default function CallDemo({ onBackToHome }: Props) {
     timersRef.current.forEach(clearTimeout)
     timersRef.current = []
     if (typeTimerRef.current) clearInterval(typeTimerRef.current)
+    stopSpeaking()
 
     scoreRef.current = 0
     targetScoreRef.current = 0
@@ -184,6 +189,7 @@ export default function CallDemo({ onBackToHome }: Props) {
   const endCall = useCallback(() => {
     timersRef.current.forEach(clearTimeout)
     if (typeTimerRef.current) clearInterval(typeTimerRef.current)
+    stopSpeaking()
     setPhase('ended')
   }, [])
 
@@ -193,6 +199,7 @@ export default function CallDemo({ onBackToHome }: Props) {
       timersRef.current.forEach(clearTimeout)
       if (typeTimerRef.current) clearInterval(typeTimerRef.current)
       cancelAnimationFrame(rafRef.current)
+      stopSpeaking()
     }
   }, [])
 
