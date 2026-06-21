@@ -5,23 +5,20 @@ import {
   Text,
   TouchableOpacity,
   StatusBar,
-  useColorScheme,
 } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 // Pages
-import Landing from './pages/Landing'
 import AppHome from './pages/AppHome'
 import TextChecker from './pages/TextChecker'
 import Family from './pages/Family'
 import CallDemo from './pages/CallDemo'
 
-type Route = 'landing' | 'app' | 'call'
+type Route = 'app' | 'call'
 type Tab = 'home' | 'check' | 'family'
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark'
-  const [currentRoute, setCurrentRoute] = useState<Route>('landing')
+  const [currentRoute, setCurrentRoute] = useState<Route>('app')
   const [currentTab, setCurrentTab] = useState<Tab>('home')
 
   const renderAppContent = () => {
@@ -44,8 +41,6 @@ function App() {
 
   const renderMainContent = () => {
     switch (currentRoute) {
-      case 'landing':
-        return <Landing onOpenApp={() => setCurrentRoute('app')} />
       case 'call':
         return <CallDemo onBackToHome={() => setCurrentRoute('app')} />
       case 'app':
