@@ -39,6 +39,11 @@ export function createElevenLabsSTTStream(
     ws.onmessage = (event: any) => {
       try {
         const data = JSON.parse(event.data as string);
+        console.log(
+          '[ElevenLabs-STT] message:',
+          data.message_type,
+          data.transcript ? data.transcript.slice(0, 80) : '',
+        );
         switch (data.message_type) {
           case 'session_started':
             sessionStarted = true;
@@ -55,6 +60,10 @@ export function createElevenLabsSTTStream(
             break;
           case 'transcriber_error':
           case 'input_error':
+            console.warn(
+              '[ElevenLabs-STT] error:',
+              data.error || data.message_type,
+            );
             onError(data.error || data.message_type);
             break;
         }
