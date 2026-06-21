@@ -42,7 +42,7 @@ export function createElevenLabsSTTStream(
         console.log(
           '[ElevenLabs-STT] message:',
           data.message_type,
-          data.transcript ? data.transcript.slice(0, 80) : '',
+          JSON.stringify(data),
         );
         switch (data.message_type) {
           case 'session_started':

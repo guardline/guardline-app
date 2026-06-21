@@ -20,6 +20,7 @@ export function useCallMonitor() {
 
   const handleTranscript = useCallback(
     (result: { text: string; isFinal: boolean }) => {
+      console.log(`[STT] ${result.isFinal ? '✅' : '…'} ${result.text}`);
       if (result.isFinal) {
         transcriptRef.current +=
           (transcriptRef.current ? ' ' : '') + result.text;
